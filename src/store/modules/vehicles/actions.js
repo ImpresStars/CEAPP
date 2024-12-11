@@ -7,16 +7,14 @@ export const actions = {
       commit('SET_VEHICLES', response.data);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
-      // Handle error appropriately
     }
   },
   async saveVehicle({ commit }, vehicle) {
     try {
       const response = await vehicleService.saveVehicle(vehicle);
-      commit('ADD_VEHICLE', response.data);
+      commit(vehicle.id ? 'UPDATE_VEHICLE' : 'ADD_VEHICLE', response.data);
     } catch (error) {
       console.error('Error saving vehicle:', error);
-      // Handle error appropriately
     }
   },
   async deleteVehicle({ commit }, vehicleId) {
@@ -25,7 +23,6 @@ export const actions = {
       commit('REMOVE_VEHICLE', vehicleId);
     } catch (error) {
       console.error('Error deleting vehicle:', error);
-      // Handle error appropriately
     }
   },
 };

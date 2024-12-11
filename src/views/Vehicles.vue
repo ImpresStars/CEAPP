@@ -26,7 +26,7 @@
       v-if="showDeleteConfirmModal"
       message="Are you sure you want to delete this vehicle?"
       @confirm="deleteVehicle"
-      @cancel="showDeleteConfirmModal = false"
+      @cancel="() => (showDeleteConfirmModal = false)"
     />
     <div v-if="error" class="mt-4 p-4 bg-red-100 text-red-700 rounded">
       {{ error }}
@@ -47,7 +47,7 @@ export default {
   components: {
     BaseButton,
     VehicleModal,
-    ConfirmModal
+    ConfirmModal,
   },
   setup() {
     const store = useStore();
@@ -57,21 +57,18 @@ export default {
     const currentVehicle = ref(null);
     const vehicleToDeleteId = ref(null);
 
-    // Computed properties from Vuex
     const vehicles = computed(() => store.getters['vehicles/allVehicles']);
     const error = computed(() => store.getters['vehicles/error']);
-    const isLoading = computed(() => store.getters['vehicles/isLoading']);
 
     const fetchVehicles = async () => {
-      const result = await store.dispatch('vehicles/fetchVehicles');
-      if (!result.success) {
-        notification.showError(result.error || 'Failed to fetch vehicles');
+      try {
+        await store.dispatch('vehicles/fetchVehicles');
+      } catch (error) {
+        notification.showError('Failed to fetch vehicles');
       }
     };
 
-    onMounted(() => {
-      fetchVehicles();
-    });
+    onMounted(fetchVehicles);
 
     const openAddVehicleModal = () => {
       currentVehicle.value = null;
@@ -95,38 +92,27 @@ export default {
 
     const saveVehicle = async (vehicle) => {
       try {
-        const action = vehicle.id
-          ? store.dispatch('vehicles/updateVehicle', { id: vehicle.id, data: vehicle })
-          : store.dispatch('vehicles/createVehicle', vehicle);
-
-        const result = await action;
-
-        if (result && result.success) {
-          notification.showSuccess(vehicle.id ? 'Vehicle updated successfully' : 'Vehicle added successfully');
-          showVehicleModal.value = false; // Close modal on success
-        } else {
-          notification.showError(result?.error || 'Failed to save vehicle');
-        }
-      } catch (error) {
-        console.error('Error saving vehicle:', error.message || error);
-        notification.showError('An unexpected error occurred while saving the vehicle.');
+        await store.dispatch('vehicles/saveVehicle', vehicle);
+        notification.showSuccess(vehicle.id ? 'Vehicle updated' : 'Vehicle added');
+        showVehicleModal.value = false;
+      } catch {
+        notification.showError('Error saving vehicle');
       }
     };
 
     const deleteVehicle = async () => {
-      const result = await store.dispatch('vehicles/deleteVehicle', vehicleToDeleteId.value);
-      if (result.success) {
-        notification.showSuccess('Vehicle deleted successfully');
+      try {
+        await store.dispatch('vehicles/deleteVehicle', vehicleToDeleteId.value);
+        notification.showSuccess('Vehicle deleted');
         showDeleteConfirmModal.value = false;
-      } else {
-        notification.showError(result.error || 'Failed to delete vehicle');
+      } catch {
+        notification.showError('Error deleting vehicle');
       }
     };
 
     return {
       vehicles,
       error,
-      isLoading,
       showVehicleModal,
       showDeleteConfirmModal,
       currentVehicle,
@@ -135,9 +121,9 @@ export default {
       editVehicle,
       confirmDeleteVehicle,
       saveVehicle,
-      deleteVehicle
+      deleteVehicle,
     };
-  }
+  },
 };
 </script>
 

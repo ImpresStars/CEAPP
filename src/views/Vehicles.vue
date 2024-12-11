@@ -19,7 +19,7 @@
     <VehicleModal
       v-if="showVehicleModal"
       :vehicle="currentVehicle"
-      @save="saveVehicle"
+      @save="handleSaveVehicle"
       @close="closeVehicleModal"
     />
     <ConfirmModal
@@ -63,7 +63,7 @@ export default {
     const fetchVehicles = async () => {
       try {
         await store.dispatch('vehicles/fetchVehicles');
-      } catch (error) {
+      } catch (err) {
         notification.showError('Failed to fetch vehicles');
       }
     };
@@ -90,23 +90,28 @@ export default {
       showDeleteConfirmModal.value = true;
     };
 
-    const saveVehicle = async (vehicle) => {
+    const handleSaveVehicle = async (vehicle) => {
       try {
-        await store.dispatch('vehicles/saveVehicle', vehicle);
-        notification.showSuccess(vehicle.id ? 'Vehicle updated' : 'Vehicle added');
+        if (vehicle.id) {
+          await store.dispatch('vehicles/updateVehicle', { id: vehicle.id, data: vehicle });
+          notification.showSuccess('Vehicle updated successfully');
+        } else {
+          await store.dispatch('vehicles/createVehicle', vehicle);
+          notification.showSuccess('Vehicle added successfully');
+        }
         showVehicleModal.value = false;
       } catch {
-        notification.showError('Error saving vehicle');
+        notification.showError('Failed to save vehicle');
       }
     };
 
     const deleteVehicle = async () => {
       try {
         await store.dispatch('vehicles/deleteVehicle', vehicleToDeleteId.value);
-        notification.showSuccess('Vehicle deleted');
+        notification.showSuccess('Vehicle deleted successfully');
         showDeleteConfirmModal.value = false;
       } catch {
-        notification.showError('Error deleting vehicle');
+        notification.showError('Failed to delete vehicle');
       }
     };
 
@@ -120,7 +125,7 @@ export default {
       closeVehicleModal,
       editVehicle,
       confirmDeleteVehicle,
-      saveVehicle,
+      handleSaveVehicle,
       deleteVehicle,
     };
   },
